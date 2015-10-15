@@ -50,6 +50,7 @@
 #include <features.h>
 
 #include <netdb.h>
+#include <string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>

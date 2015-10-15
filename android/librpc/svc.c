@@ -39,6 +39,8 @@
 #define __FORCE_GLIBC
 #include <features.h>
 
+#include <string.h>
+#include <strings.h>
 #include <errno.h>
 #include <unistd.h>
 #include "rpc_private.h"
