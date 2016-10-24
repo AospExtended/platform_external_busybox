@@ -43,7 +43,7 @@ $(busybox_prepare_full): $(BB_PATH)/busybox-full.config
 	@rm -f $(shell find $(abspath $(call intermediates-dir-for,EXECUTABLES,busybox)) -name "*.o")
 	@mkdir -p $(@D)
 	@cat $^ > $@ && echo "CONFIG_CROSS_COMPILER_PREFIX=\"$(BUSYBOX_CROSS_COMPILER_PREFIX)\"" >> $@
-	make -C $(BB_PATH) prepare O=$(@D)
+	make -C $(BB_PATH) prepare O=$(@D) $(BB_PREPARE_FLAGS)
 
 busybox_prepare_minimal := $(bb_gen)/minimal/.config
 $(busybox_prepare_minimal): $(BB_PATH)/busybox-minimal.config
@@ -52,7 +52,7 @@ $(busybox_prepare_minimal): $(BB_PATH)/busybox-minimal.config
 	@rm -f $(shell find $(abspath $(call intermediates-dir-for,STATIC_LIBRARIES,libbusybox)) -name "*.o")
 	@mkdir -p $(@D)
 	@cat $^ > $@ && echo "CONFIG_CROSS_COMPILER_PREFIX=\"$(BUSYBOX_CROSS_COMPILER_PREFIX)\"" >> $@
-	make -C $(BB_PATH) prepare O=$(@D)
+	make -C $(BB_PATH) prepare O=$(@D) $(BB_PREPARE_FLAGS)
 
 
 #####################################################################
@@ -99,8 +99,8 @@ BUSYBOX_CFLAGS = \
 	-fno-strict-aliasing \
 	-fno-builtin-stpcpy \
 	-include $(bb_gen)/$(BUSYBOX_CONFIG)/include/autoconf.h \
-	-D'CONFIG_DEFAULT_MODULES_DIR="$(KERNEL_MODULES_DIR)"' \
-	-D'BB_VER="$(strip $(shell $(SUBMAKE) kernelversion)) $(BUSYBOX_SUFFIX)"' -DBB_BT=AUTOCONF_TIMESTAMP
+	'-DCONFIG_DEFAULT_MODULES_DIR="$(KERNEL_MODULES_DIR)"' \
+	-DBB_BT=AUTOCONF_TIMESTAMP
 
 ifeq ($(BIONIC_L),true)
     BUSYBOX_CFLAGS += -DBIONIC_L
@@ -128,7 +128,9 @@ LOCAL_CFLAGS += \
   -Dendusershell=busybox_endusershell \
   -Dgetmntent=busybox_getmntent \
   -Dgetmntent_r=busybox_getmntent_r \
-  -Dgenerate_uuid=busybox_generate_uuid
+  -Dgenerate_uuid=busybox_generate_uuid \
+  # If you ever need to build this lib, uncomment the line
+  # '-DBB_VER="$(shell cat $(TARGET_OUT_INTERMEDIATES)/busybox/minimal/.kernelrelease)"
 LOCAL_ASFLAGS := $(BUSYBOX_AFLAGS)
 LOCAL_MODULE := libbusybox
 LOCAL_MODULE_TAGS := eng debug
@@ -146,7 +148,9 @@ BUSYBOX_CONFIG:=full
 BUSYBOX_SUFFIX:=bionic
 LOCAL_SRC_FILES := $(BUSYBOX_SRC_FILES)
 LOCAL_C_INCLUDES := $(bb_gen)/full/include $(BUSYBOX_C_INCLUDES)
-LOCAL_CFLAGS := $(BUSYBOX_CFLAGS)
+LOCAL_CFLAGS += \
+	$(BUSYBOX_CFLAGS) \
+	'-DBB_VER="$(shell cat $(TARGET_OUT_INTERMEDIATES)/busybox/full/.kernelrelease)"'
 LOCAL_ASFLAGS := $(BUSYBOX_AFLAGS)
 LOCAL_MODULE := busybox
 LOCAL_MODULE_TAGS := eng debug
@@ -192,7 +196,8 @@ LOCAL_CFLAGS += \
   -Dendusershell=busybox_endusershell \
   -Dgetmntent=busybox_getmntent \
   -Dgetmntent_r=busybox_getmntent_r \
-  -Dgenerate_uuid=busybox_generate_uuid
+  -Dgenerate_uuid=busybox_generate_uuid \
+  '-DBB_VER="$(shell cat $(TARGET_OUT_INTERMEDIATES)/busybox/full/.kernelrelease)"'
 LOCAL_ASFLAGS := $(BUSYBOX_AFLAGS)
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE := static_busybox
